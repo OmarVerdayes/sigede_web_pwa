@@ -1,9 +1,23 @@
 {
-    "name": "SIGEDE aplicación",
+    "name": "SIGEDE",
     "short_name": "SIGEDE",
-    "description": "Es pa pasar :(",
-    "start_url": "/",
+    "description": "Sistema de Gestión de Credenciales",
+    "lang": "es",
     "display": "standalone",
+    "start_url": "/",
     "background_color": "#ffffff",
-    "theme_color": "#000000"
-}
+    "theme_color": "#000000",
+    "icons": [
+      {
+        "src": "/icons/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/icons/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }
+  

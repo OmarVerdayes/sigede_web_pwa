@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: false },
   css: ["bulma/css/bulma.css"],
-  plugins: ["~/plugins/toastification.js", "~/plugins/axios.js"],
+  plugins: ["~/plugins/toastification.js", "~/plugins/axios.js", "~/plugins/service-worker.js"],
   modules: ["@nuxtjs/cloudinary", "@nuxt/image"],
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
@@ -27,4 +27,19 @@ export default defineNuxtConfig({
       include: ["@unpic/vue", "@cloudinary-util/url-loader"],
     },
   },
+  app: {
+    head: {
+      link: [
+        {
+          rel: "manifest",
+          href:"/manifest.json",
+        },
+      ],
+      meta: [
+        { name: "theme-color", content: "#000000" },
+        { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "apple-mobile-web-app-status-bar-style", content: "balck" },
+      ]
+    }
+  }
 });
