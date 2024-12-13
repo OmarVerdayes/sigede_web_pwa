@@ -95,7 +95,6 @@ export const registerCapturist = async (data) => {
 
 
 
-
 export const syncPendingCapturists = async () => {
   try {
     const allDocs = await capturistsDb.allDocs({ include_docs: true });
@@ -105,35 +104,39 @@ export const syncPendingCapturists = async () => {
 
     if (unsyncedDocs.length === 0) {
       console.log("No hay capturists pendientes de sincronización.");
-      return;
+    } else {
+      // Usando Promise.all para sincronizar en paralelo
+      const syncPromises = unsyncedDocs.map(async (doc) => {
+        try {
+          const response = await axios.post(`${BASEURL}api/capturists/register`, doc);
+
+          if (response.status === 200) {
+            console.log(`Documento ${doc._id} sincronizado con éxito.`);
+          }
+        } catch (e) {
+          console.warn(`Error al sincronizar documento ${doc._id}:`, e.message);
+        }
+      });
+
+      // Espera a que todos los documentos se sincronicen
+      await Promise.all(syncPromises);
+      console.log("Sincronización completada.");
     }
 
-    // Usando Promise.all para sincronizar en paralelo
-    const syncPromises = unsyncedDocs.map(async (doc) => {
-      try {
-        const response = await axios.post(`${BASEURL}api/capturists/register`, doc);
+    // Eliminar todos los documentos locales en la base de datos
+    const allDocsToDelete = await capturistsDb.allDocs({ include_docs: true });
+    const deletePromises = allDocsToDelete.rows.map((row) =>
+      capturistsDb.remove({ _id: row.id, _rev: row.value.rev })
+    );
 
-        if (response.status === 200) {
-          await capturistsDb.put({
-            ...doc,
-            synced: true,
-          });
-          await capturistsDb.remove(doc); // Elimina el documento después de registrarlo
-
-          console.log(`Documento ${doc._id} sincronizado con éxito.`);
-        }
-      } catch (e) {
-        console.warn(`Error al sincronizar documento ${doc._id}:`, e.message);
-      }
-    });
-
-    // Espera a que todos los documentos se sincronicen
-    await Promise.all(syncPromises);
-    console.log("Sincronización completada.");
+    await Promise.all(deletePromises);
+    console.log("Todos los documentos locales han sido eliminados.");
   } catch (e) {
     console.error("Error al sincronizar capturists:", e.message);
   }
 };
+
+
 //------------------------------------------------------------------------------------------------
 
 
