@@ -8,7 +8,7 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { syncPendingCapturists } from './services/ServiceAdmin';
+import {  syncPendingCapturistsRegister, syncPendingCapturistsUpdate } from './services/ServiceAdmin';
 
 onMounted(() => {
   if ('serviceWorker' in navigator) {
@@ -22,7 +22,8 @@ onMounted(() => {
   // Verificar si hay conexión a Internet
   if (navigator.onLine) {
     console.log('Conexión a Internet disponible. Sincronizando datos...');
-    syncPendingCapturists();
+    syncPendingCapturistsRegister();
+    syncPendingCapturistsUpdate();
   } else {
     console.log('Sin conexión a Internet. Los datos se sincronizarán cuando haya conexión.');
   }

@@ -37,41 +37,6 @@ export const getAllCapturitsByInstitutionId = async (institutionId) => {
     }
   }
 };
-/*
-export const registerCapturist = async (data) => {
-  try {
-    // Intenta registrar en el backend
-    const response = await axios.post(`${BASEURL}api/capturists/register`, data);
-    return response.data;
-  } catch (e) {
-    console.warn("No hay conexión, guardando en CouchDB.");
-
-    // Generar un ID único para el capturist
-    const capturistId = `capturist_${new Date().toISOString()}`;
-
-    // Guardar en CouchDB
-    await capturistsDb.put({
-      _id: capturistId,
-      ...data,
-      synced: false, // Marca como no sincronizado
-    });
-
-    // Aquí agregamos el capturist localmente para que se vea de inmediato en la lista
-    // Si ya tienes una referencia de la lista de capturists en tu componente, puedes actualizarla aquí
-    // Esto podría ser un estado en un componente Vue o un store global
-    const newCapturist = {
-      _id: capturistId,
-      ...data,
-      synced: false,
-    };
-
-    // Si tienes una variable que almacena los capturists (por ejemplo, `capturists`), la actualizas así:
-    capturists.value.push(newCapturist); // Asumiendo que capturists es un ref en tu componente Vue
-
-    return "Capturist guardado localmente. Será enviado cuando haya conexión.";
-  }
-};
-*/
 
 export const registerCapturist = async (data) => {
   try {
@@ -93,9 +58,63 @@ export const registerCapturist = async (data) => {
 };
 
 
+export const updateCapturist = async (data) => {
+  try {
+    // Intenta actualizar en el backend
+    const response = await axios.put(
+      `${BASEURL}api/capturists/update-basic-data`,
+      data
+    );
+    return response.data;
+  } catch (e) {
+    console.warn("No hay conexión, actualizando en CouchDB.");
+    
+    // Generar ID único basado en el userAccountId
+    const capturistId = String(data.userAccountId);
+
+    // Guardar en PouchDB con marca de no sincronizado
+    await capturistsDb.put({
+      _id: capturistId,
+      ...data,
+      synced: false,
+    });
+
+    return { message: "offline", capturistId };
+  }
+};
+
+export const syncPendingCapturistsUpdate = async () => {
+  try {
+    // Obtén todos los documentos de PouchDB
+    const allDocs = await capturistsDb.allDocs({ include_docs: true });
+
+    // Filtra los documentos que no han sido sincronizados
+    const unsyncedDocs = allDocs.rows
+      .map((row) => row.doc)
+      .filter((doc) => doc.synced === false);
+
+    for (const doc of unsyncedDocs) {
+      try {
+        // Intenta sincronizar con el backend
+        await axios.put(`${BASEURL}api/capturists/update-basic-data`, doc);
+
+        // Marca como sincronizado en PouchDB
+        await capturistsDb.put({
+          ...doc,
+          synced: true,
+        });
+        console.log(`Capturist ${doc._id} sincronizado correctamente.`);
+      } catch (syncError) {
+        console.error(`Error al sincronizar capturist ${doc._id}:`, syncError);
+      }
+    }
+  } catch (e) {
+    console.error("Error al sincronizar capturists pendientes:", e);
+  }
+};
 
 
-export const syncPendingCapturists = async () => {
+export const syncPendingCapturistsRegister = async () => {
   try {
     const allDocs = await capturistsDb.allDocs({ include_docs: true });
     const unsyncedDocs = allDocs.rows
@@ -137,6 +156,7 @@ export const syncPendingCapturists = async () => {
 };
 
 
+
 //------------------------------------------------------------------------------------------------
 
 
@@ -152,18 +172,9 @@ export const getOneCapturist = async (userAccountId, institutionId) => {
     return "Ocurrio un error en la peticion";
   }
 };
-export const updateCapturist = async (data) => {
-  try {
-    const response = await axios.put(
-      `${BASEURL}api/capturists/update-basic-data`,
-      data
-    );
-    return response.data;
-  } catch (e) {
-    console.error(e);
-    return "Ocurrio un error en la peticion";
-  }
-};
+
+
+
 
 export const getForm = async () => {
   try {
